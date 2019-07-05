@@ -1,0 +1,86 @@
+    #include <SparkFunCCS811.h>
+    #include "SparkFunBME280.h"
+    #include "Wire.h"
+    #include <Sparkfun_APDS9301_Library.h>
+    #include <WiFi.h>
+    
+    BME280 bme;
+    CCS811 ccs(0x5B);
+    APDS9301 apds;
+    
+    // Pin assignment definitions
+    #define AIR_RST      4
+    #define AIR_WAKE     15
+    #define DONE_LED     5
+    
+    void setup() 
+    {
+      delay(5);    // The CCS811 wants a brief delay after startup.
+      Serial.begin(115200);
+      Wire.begin();
+
+      pinMode(DONE_LED, OUTPUT);
+      digitalWrite(DONE_LED, LOW);
+    
+     
+      // BME280 sensor setup - these are fairly conservative settings, suitable for
+      //  most applications. For more information regarding the settings available
+      //  for the BME280, see the example sketches in the BME280 library.
+      bme.settings.commInterface = I2C_MODE;
+      bme.settings.I2CAddress = 0x77;
+      bme.settings.runMode = 3;
+      bme.settings.tStandby = 0;
+      bme.settings.filter = 0;
+      bme.settings.tempOverSample = 1;
+      bme.settings.pressOverSample = 1;
+      bme.settings.humidOverSample = 1;
+      bme.begin();
+    
+      // CCS811 sensor setup.
+      pinMode(AIR_WAKE, OUTPUT);
+      digitalWrite(AIR_WAKE, LOW);
+      pinMode(AIR_RST, OUTPUT);
+      digitalWrite(AIR_RST, LOW);
+      delay(10);
+      digitalWrite(AIR_RST, HIGH);
+      delay(100);
+      ccs.begin();
+    
+      // APDS9301 sensor setup. Leave the default settings in place.
+      apds.begin(0x39);
+    }
+    
+    void loop() 
+    {
+     
+        delay(1000);
+        // Update temperature. This also updates compensation values used to
+        //  calculate other parameters.
+        Serial.print("Temperature: ");
+        Serial.print(bme.readTempF(), 2);
+        Serial.println(" degrees F");
+      
+        // Display relative humidity.
+        Serial.print("%RH: ");
+        Serial.print(bme.readFloatHumidity(), 2);
+        Serial.println(" %");
+    
+        // Display pressure.
+        Serial.print("Pres: ");
+        Serial.print(bme.readFloatPressure() * 0.0002953);
+        Serial.println(" in");
+    
+    
+        // Trigger the CCS811's internal update procedure, then
+        //  dump the values to the serial port.
+        ccs.readAlgorithmResults();
+    
+        Serial.print("CO2: ");
+        Serial.println(ccs.getCO2());
+    
+        Serial.print("tVOC: ");
+        Serial.println(ccs.getTVOC());
+    
+        Serial.print("Luminous flux: ");
+        Serial.println(apds.readLuxLevel(),6);
+    }

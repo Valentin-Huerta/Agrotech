@@ -1,0 +1,61 @@
+#include <MySQL_Cursor.h>
+#include <MySQL_Connection.h>
+#include <MySQL_Encrypt_Sha1.h>
+#include <MySQL_Packet.h>
+
+#include <WiFi.h>
+
+ 
+const char* ssid = "INFINITUM9EA1";
+const char* password =  "9970919290";
+
+
+byte mac_addr[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+IPAddress server_addr(189,159,97,109);  // IP of the MySQL *server* here
+char user[] = "Valhuert";              // MySQL user login username
+char pass[] = "Metalli1";        // MySQL user login password
+// Sample query
+char INSERT_SQL[] = "INSERT INTO EarthBound.Empleado (Nombre) VALUES ('Donquijote')";
+WiFiClient client;
+MySQL_Connection conn((Client *)&client);
+
+
+
+ 
+void setup() {
+ 
+  Serial.begin(115200);
+ 
+  WiFi.begin(ssid, password);
+ 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.println("Connecting to WiFi..");
+  }
+  Serial.println("Connected to the WiFi network");
+  IPAddress ip = WiFi.localIP();
+  Serial.print("My IP address is: ");
+  Serial.println(ip);
+  if (conn.connect(server_addr, 3306, user, pass)) {
+    delay(1000);
+    Serial.println("SE CONECTO");
+  }
+  else
+    Serial.println("Connection failed.");
+ 
+}
+ 
+void loop() {
+  delay(2000);
+
+  Serial.println("Recording data.");
+
+  // Initiate the query class instance
+  MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+  // Execute the query
+  cur_mem->execute(INSERT_SQL);
+  Serial.println("SE EJECUTO");
+  // Note: since there are no results, we do not need to read any data
+  // Deleting the cursor also frees up memory used
+  delete cur_mem;
+}
